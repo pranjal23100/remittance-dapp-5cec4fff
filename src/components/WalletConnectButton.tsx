@@ -37,6 +37,26 @@ export const WalletConnectButton = () => {
   const handleConnect = async () => {
     setIsLoading(true);
     try {
+      // Check if Freighter is installed
+      if (!(window as any).freighter) {
+        toast.error(
+          <div className="flex flex-col gap-2">
+            <p>Freighter wallet not detected</p>
+            <a
+              href="https://www.freighter.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline text-xs"
+            >
+              Install Freighter Extension
+            </a>
+          </div>,
+          { duration: 5000 }
+        );
+        setIsLoading(false);
+        return;
+      }
+
       const pubKey = await getWalletPublicKey();
       const bal = await getAccountBalance(pubKey);
       setPublicKey(pubKey);
@@ -44,7 +64,11 @@ export const WalletConnectButton = () => {
       setIsConnected(true);
       toast.success("Wallet connected successfully!");
     } catch (error: any) {
-      toast.error(error.message || "Failed to connect wallet");
+      if (error.message?.includes("User declined")) {
+        toast.error("Connection request declined");
+      } else {
+        toast.error(error.message || "Failed to connect wallet");
+      }
     } finally {
       setIsLoading(false);
     }
